@@ -23,36 +23,53 @@ proc readOutput(p: Process): (string, int) =
   result[1] = p.waitForExit
 
 proc opGorge*(cmd, input, cache: string, info: TLineInfo; conf: ConfigRef): (string, int) =
-  let workingDir = parentDir(toFullPath(conf, info))
+  ## Runs an external `cmd` feeding `input` into stdin (optional) and returning
+  ## the command's output (`stdout` + `stdin`) and exit code.
+  ##
+  ## If a `cache` key is provided, any existing successful results (exit code
+  ## 0) will be returned in lieu of executing the command.
+  ##
+  ## Expect a raised `ProcessError` should the program exiting with non-zero
+  ## exit codes.
+  ##
+  ## Expect a raised `OSError` should the program not be found/executed or
+  ## finish with a non-zero exit code.
+  ##
+  ## Expect an `IOError` should something horribly go awry while executing that
+  ## isn't a process terminating properly.
+
+  # return the cached version (if we want it & we have it)
+  var cacheFilename: string
   if cache.len > 0:# and optForceFullMake notin gGlobalOptions:
     let h = secureHash(cmd & "\t" & input & "\t" & cache)
-    let filename = toGeneratedFile(conf, AbsoluteFile("gorge_" & $h), "txt").string
+    cacheFilename = toGeneratedFile(conf, AbsoluteFile("gorge_" & $h), "txt").string
     var f: File
-    if open(f, filename):
+    if open(f, cacheFilename):
       result = (f.readAll, 0)
       f.close
       return
-    var readSuccessful = false
-    try:
-      var p = startProcess(cmd, workingDir,
-                           options={poEvalCommand, poStderrToStdout})
-      if input.len != 0:
-        p.inputStream.write(input)
-        p.inputStream.close()
-      result = p.readOutput
-      readSuccessful = true
-      # only cache successful runs:
-      if result[1] == 0:
-        writeFile(filename, result[0])
-    except IOError, OSError:
-      if not readSuccessful: result = ("", -1)
+
+  let workingDir = parentDir(toFullPath(conf, info))
+
+  # fire up the process -- intentially bubbling up errors (see #1994)
+  var p = startProcess(cmd, workingDir,
+                       options={poEvalCommand, poStdErrToStdOut})
+
+  # pass along stdin if we were given it
+  if input.len != 0:
+    p.inputStream.write(input)
+    p.inputStream.close()
+
+  # block until the process ends
+  result = p.readOutput
+
+  if result[1] == 0:
+    # cache successful runs if we were asked
+    if cache.len > 0:
+      try:
+        writeFile(cacheFilename, result[0])
+      except IOError, OSError:
+        # ignore corner case of cache writing failures
+        discard
   else:
-    try:
-      var p = startProcess(cmd, workingDir,
-                           options={poEvalCommand, poStderrToStdout})
-      if input.len != 0:
-        p.inputStream.write(input)
-        p.inputStream.close()
-      result = p.readOutput
-    except IOError, OSError:
-      result = ("", -1)
+    raiseProcessError(cmd & " ended with exit code " & $result[1], result[1], result[0])

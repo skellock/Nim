@@ -60,6 +60,20 @@ type
 
   Process* = ref ProcessObj ## represents an operating system process
 
+  ProcessError* = object of CatchableError
+    ## An error triggered by ``gorge`` and ``staticExec`` when the
+    ## command finished with a non-zero exit code.
+    exitCode: int
+    output: string
+
+proc raiseProcessError*(msg: string, exitCode: int, output: string) {.noinline,
+                        noreturn.} =
+  var e: ref ProcessError
+  new(e)
+  e.msg = msg
+  e.exitCode = exitCode
+  e.output = output
+  raise e
 
 const poUseShell* {.deprecated.} = poUsePath
   ## Deprecated alias for poUsePath.
