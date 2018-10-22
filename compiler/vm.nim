@@ -1404,10 +1404,13 @@ proc rawExecute(c: PCtx, start: int, tos: PStackFrame): TFullReg =
         decodeBC(rkNode)
         inc pc
         let rd = c.code[pc].regA
+        inc pc
+        let re = c.code[pc].regB
 
         createStr regs[ra]
         regs[ra].node.strVal = opGorge(regs[rb].node.strVal,
                                       regs[rc].node.strVal, regs[rd].node.strVal,
+                                      regs[re].node.intVal != 0,
                                       c.debug[pc], c.config)[0]
       else:
         globalError(c.config, c.debug[pc], "VM is not built with 'gorge' support")

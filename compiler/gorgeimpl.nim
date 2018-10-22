@@ -22,7 +22,7 @@ proc readOutput(p: Process): (string, int) =
     result[0].setLen(result[0].len - "\n".len)
   result[1] = p.waitForExit
 
-proc opGorge*(cmd, input, cache: string, info: TLineInfo; conf: ConfigRef): (string, int) =
+proc opGorge*(cmd, input, cache: string, dontThrow: bool, info: TLineInfo; conf: ConfigRef): (string, int) =
   ## Runs an external `cmd` feeding `input` into stdin (optional) and returning
   ## the command's output (`stdout` + `stdin`) and exit code.
   ##
@@ -66,4 +66,5 @@ proc opGorge*(cmd, input, cache: string, info: TLineInfo; conf: ConfigRef): (str
         # ignore corner case of cache writing failures
         discard
   else:
-    localError(conf, info, cmd & " ended with exit code " & $result[1])
+    if not dontThrow:
+      localError(conf, info, cmd & " ended with exit code " & $result[1])

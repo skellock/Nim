@@ -77,7 +77,7 @@ proc staticWalkDirImpl(path: string, relative: bool): PNode =
 
 proc registerAdditionalOps*(c: PCtx) =
   proc gorgeExWrapper(a: VmArgs) =
-    let (s, e) = opGorge(getString(a, 0), getString(a, 1), getString(a, 2),
+    let (s, e) = opGorge(getString(a, 0), getString(a, 1), getString(a, 2), getBool(a, 3),
                          a.currentLineInfo, c.config)
     setResult a, newTree(nkTupleConstr, newStrNode(nkStrLit, s), newIntNode(nkIntLit, e))
 

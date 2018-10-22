@@ -648,17 +648,20 @@ proc genBinaryABC(c: PCtx; n: PNode; dest: var TDest; opc: TOpcode) =
   c.freeTemp(tmp)
   c.freeTemp(tmp2)
 
-proc genBinaryABCD(c: PCtx; n: PNode; dest: var TDest; opc: TOpcode) =
+proc genBinaryABCDE(c: PCtx; n: PNode; dest: var TDest; opc: TOpcode) =
   let
     tmp = c.genx(n.sons[1])
     tmp2 = c.genx(n.sons[2])
     tmp3 = c.genx(n.sons[3])
+    tmp4 = c.genx(n.sons[4])
   if dest < 0: dest = c.getTemp(n.typ)
   c.gABC(n, opc, dest, tmp, tmp2)
   c.gABC(n, opc, tmp3)
+  c.gABC(n, opc, tmp4)
   c.freeTemp(tmp)
   c.freeTemp(tmp2)
   c.freeTemp(tmp3)
+  c.freeTemp(tmp4)
 
 proc genNarrow(c: PCtx; n: PNode; dest: TDest) =
   let t = skipTypes(n.typ, abstractVar-{tyTypeDesc})
@@ -1119,7 +1122,7 @@ proc genMagic(c: PCtx; n: PNode; dest: var TDest; m: TMagic) =
     c.gABC(n, opcTypeTrait, dest, tmp)
     c.freeTemp(tmp)
   of mSlurp: genUnaryABC(c, n, dest, opcSlurp)
-  of mStaticExec: genBinaryABCD(c, n, dest, opcGorge)
+  of mStaticExec: genBinaryABCDE(c, n, dest, opcGorge)
   of mNLen: genUnaryABI(c, n, dest, opcLenSeq, nimNodeFlag)
   of mGetImpl: genUnaryABC(c, n, dest, opcGetImpl)
   of mGetImplTransf: genUnaryABC(c, n, dest, opcGetImplTransf)

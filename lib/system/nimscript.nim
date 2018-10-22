@@ -237,11 +237,11 @@ proc exec*(command: string) =
       raise newException(OSError, "FAILED: " & command)
     checkOsError()
 
-proc exec*(command: string, input: string, cache = "") {.
+proc exec*(command: string, input: string, cache = "", dontThrow = true) {.
   raises: [OSError], tags: [ExecIOEffect].} =
   ## Executes an external process.
   log "exec: " & command:
-    echo staticExec(command, input, cache)
+    echo staticExec(command, input, cache, dontThrow)
 
 proc selfExec*(command: string) =
   ## Executes an external command with the current nim/nimble executable.

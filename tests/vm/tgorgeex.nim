@@ -7,4 +7,4 @@ discard """
 
 const
   execName = when defined(windows): "tgorgeex.bat" else: "./tgorgeex.sh"
-  res = gorgeEx(execName)
+  res = gorgeEx(execName, dontThrow = false)
