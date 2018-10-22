@@ -26,17 +26,11 @@ proc opGorge*(cmd, input, cache: string, info: TLineInfo; conf: ConfigRef): (str
   ## Runs an external `cmd` feeding `input` into stdin (optional) and returning
   ## the command's output (`stdout` + `stdin`) and exit code.
   ##
+  ## If the command is not able to be run or finishes with a non-zero exit code
+  ## then an error will be raised.
+  ##
   ## If a `cache` key is provided, any existing successful results (exit code
   ## 0) will be returned in lieu of executing the command.
-  ##
-  ## Expect a raised `ProcessError` should the program exiting with non-zero
-  ## exit codes.
-  ##
-  ## Expect a raised `OSError` should the program not be found/executed or
-  ## finish with a non-zero exit code.
-  ##
-  ## Expect an `IOError` should something horribly go awry while executing that
-  ## isn't a process terminating properly.
 
   # return the cached version (if we want it & we have it)
   var cacheFilename: string
@@ -72,4 +66,4 @@ proc opGorge*(cmd, input, cache: string, info: TLineInfo; conf: ConfigRef): (str
         # ignore corner case of cache writing failures
         discard
   else:
-    raiseProcessError(cmd & " ended with exit code " & $result[1], result[1], result[0])
+    localError(conf, info, cmd & " ended with exit code " & $result[1])
