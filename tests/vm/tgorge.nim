@@ -1,37 +1,20 @@
-discard """
-  output: '''[127, 127, 0, 255]
-[127, 127, 0, 255]
-'''
+import os
 
-  nimout: '''caught Exception'''
-"""
+template getScriptDir(): string =
+  parentDir(instantiationInfo(-1, true).filename)
 
-import os, osproc
+block gorge:
+  const
+    execName = when defined(windows): "tgorge.bat" else: "./tgorge.sh"
+    relOutput = gorge(execName)
+    absOutput = gorge(getScriptDir() / execName)
 
-# template getScriptDir(): string =
-#   parentDir(instantiationInfo(-1, true).filename)
+  doAssert relOutput == "gorge test"
+  doAssert absOutput == "gorge test"
 
-# block gorge:
-#   const
-#     execName = when defined(windows): "tgorge.bat" else: "./tgorge.sh"
-#     relOutput = gorge(execName)
-#     absOutput = gorge(getScriptDir() / execName)
-
-#   doAssert relOutput == "gorge test"
-#   doAssert absOutput == "gorge test"
-
-static:
-  var sawProcessError = false
-  try:
-    discard gorgeEx("./tgorge_404.sh")
-  except:
-    echo "yay"
-
-  # doAssert sawProcessError == true
-
-# block gorgeEx:
-#   const
-#     execName = when defined(windows): "tgorgeex.bat" else: "./tgorgeex.sh"
-#     res = gorgeEx(execName)
-#   doAssert res.output == "gorgeex test"
-#   doAssert res.exitCode == 1
+block gorgeEx:
+  const
+    execName = when defined(windows): "tgorgeex.bat" else: "./tgorgeex.sh"
+    res = gorgeEx(execName)
+  doAssert res.output == "gorgeex test"
+  doAssert res.exitCode == 1
